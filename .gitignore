@@ -1,1 +1,3 @@
 *.php
+books
+node_modules
