@@ -30,7 +30,7 @@ You will also need something to join the OCR'ed pdfs with:
   - Click export and past just the cookies (without comments) into the cookies = ''; in the node_dl.js
   - If you are using something else, just ut your cookies into the cookies variable in node_dl.js
   - Set other variables like ua (user-agent), pages (how many pages the book has), local_name (where to download and how to name the files)
- 4. You might want to create a directory for the files, eg. book/my_book. In that case the local_name should be 'books/my_book/book_name'
+ 4. You might want to create a directory for the files, eg. books/my_book. In that case the local_name should be 'books/my_book/book_name'
  5. Run node node_dl.js
  
  ## Converting downloaded files into searchable OCR'ed pdf:
