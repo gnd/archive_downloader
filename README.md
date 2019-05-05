@@ -26,11 +26,11 @@ You will also need something to join the OCR'ed pdfs with:
  1. Login to archive.org
  2. Borrow a book
  3. Copy your cookies. 
- 3.1 In EditThisCookie Options, first set the preferred export format to be 'Semicolon separated name=value pairs'
- 3.2 Click export and past just the cookies (without comments) into the cookies = ''; in the node_dl.js
- 3.3 If you are using something else, just ut your cookies into the cookies variable in node_dl.js
- 4. Set other variables like ua (user-agent), pages (how many pages the book has), local_name (where to download and how to name the files)
- 4.1 You might want to create a directory for the files, eg. book/my_book. In that case the local_name should be 'books/my_book/book_name'
+  - In EditThisCookie Options, first set the preferred export format to be 'Semicolon separated name=value pairs'
+  - Click export and past just the cookies (without comments) into the cookies = ''; in the node_dl.js
+  - If you are using something else, just ut your cookies into the cookies variable in node_dl.js
+  - Set other variables like ua (user-agent), pages (how many pages the book has), local_name (where to download and how to name the files)
+ 4. You might want to create a directory for the files, eg. book/my_book. In that case the local_name should be 'books/my_book/book_name'
  5. Run node node_dl.js
  
  ## Converting downloaded files into searchable OCR'ed pdf:
