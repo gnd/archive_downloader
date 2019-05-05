@@ -3,7 +3,6 @@
 # Convert the downloaded jp2 files into jpg and pdf
 # this needs:
 #    - Imagemagick
-#    - Imagemagick policy enable write for PDF: https://stackoverflow.com/questions/42928765/convertnot-authorized-aaaa-error-constitute-c-readimage-453/52661288#52661288
 #    - Tesseract
 #    - pdftk
 #
