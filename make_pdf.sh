@@ -1,13 +1,35 @@
 #!/bin/bash
 #
 # Convert the downloaded jp2 files into jpg and pdf
-# this needs:
-#    - Imagemagick
-#    - Tesseract
-#    - pdftk
+#
+# Prerequisities:
+#   - Imagemagick (convert)
+#   - poppler-utils (pdfinfo, pdfseparate, pdfunite)
+#   - Tesseract
+#
+# Install prerequisities like:
+#   - apt-get install poppler-utils tesseract-ocr imagemagick
+#
+# Usage:
+#   make_pdf.sh <folder> <outfile>
 #
 # gnd, 2019
 ###################################################
+
+function check_installed {
+    status=`dpkg-query -W -f='${Status}' $1`
+    if [[ "$status" = "install ok installed" ]]; then
+        return 1
+    else
+        echo "package $1 not installed."
+        exit
+    fi
+}
+
+# Check if prerequisities installed
+check_installed poppler-utils
+check_installed imagemagick
+check_installed tesseract-ocr
 
 # Check if param set
 if [[ -z $1 ]]; then
@@ -55,6 +77,6 @@ else
 
     # Put all pdfs together
     echo "Creating final pdf .."
-    pdftk $BOOK/*.pdf cat output $OUT.pdf
+    pdfunite $BOOK/*.pdf $OUT.pdf
     echo "All done."
 fi
