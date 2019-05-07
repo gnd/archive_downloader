@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script docomposes a given PDF into jpg files,
+# This script decomposes a given PDF into jpg files,
 # OCR's them and puts them back into a searchable PDF.
 # The result might be a much bigger PDF with less quality
 # but now it is possible to copy, search and mark it.
