@@ -86,6 +86,7 @@ echo "Putting the OCR'd PDF together.."
 pdfunite $out_dir/*.pdf $out
 echo "Done."
 
-#rm -rf $pdf_dir
-#rm -rf $jpg_dir
-#rm -rf $out_dir
+# Cleanup
+rm -rf $pdf_dir
+rm -rf $jpg_dir
+rm -rf $out_dir
