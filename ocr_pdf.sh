@@ -13,6 +13,12 @@
 # Install prerequisities like:
 #   - apt-get install poppler-utils tesseract-ocr imagemagick
 #
+# To use ImageMagick you will need to change the PDF policy:
+#   in /etc/ImageMagick-6/policy.xml, change this line
+#       <policy domain="coder" rights="none" pattern="PDF" />
+#   into this:
+#       <policy domain="coder" rights="read" pattern="PDF" />
+#
 # Usage:
 #   ocr_pdf.sh <infile> <outfile>
 #
