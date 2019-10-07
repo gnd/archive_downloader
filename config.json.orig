@@ -11,6 +11,9 @@
     "_pages" : "how many pages to download",
     "pages" : "",
 
+    "_local_dir" : "where to download the files",
+    "local_dir" : "",
+
     "_sleep_ms" : "how long to wait between requests (in ms)",
     "sleep_ms" : 100,
 

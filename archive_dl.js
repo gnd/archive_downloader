@@ -3,7 +3,7 @@ This uses node.js to download images from borrowed Archive.org books
 
 Instalation:
 - install node.js
-- install request and sleep (eg. npm install request sleep)
+- install request, sleep, readline-sync (eg. npm install request sleep readline-sync)
 
 How to save a book:
 - request the book
@@ -15,14 +15,17 @@ How to save a book:
 - run like: node archive_dl.js
 
 gnd, 2018-2019, initial impulse by db @ mnskp
+
+TODO: how did i start to code this in nodejs anyway ? async my ass..
+TODO: rewrite in python
 */
 
 /* REQUIRES*/
-const readline = require('readline').createInterface({input: process.stdin, output: process.stdout});
 var config = require('./config.json');
 var fs = require('fs'),
     request = require('request'),
-    sleep = require('sleep');
+    sleep = require('sleep'),
+    readline = require('readline-sync');
 
 /* FUNCTIONS */
 var download = function(options, filename, callback) {
@@ -57,25 +60,23 @@ if (config.ua === "") {
     console.log('No User Agent defined. Please set the value in config.json');
     process.exit();
 } else {
-    console.log('Using user agent: \n' + config.ua);
+    console.log('Using user agent: ' + config.ua);
 }
 if (config.pages === "") {
     console.log('Number of pages not defined.');
-    readline.question('Please provide the number of pages to download:',
-        (config.pages) => {
-            console.log(`Downloading {config.pages} pages.`)
-            readline.close()
-        }
-    );
+    config.pages = parseInt(readline.question('Please provide the number of pages to download: '), 10);
+    console.log(`Downloading ${config.pages} pages.`);
 }
 if (config.local_dir === "") {
     console.log('Location where to download images not provided.')
-    readline.question('Please provide the name of the directory where to download the images:',
-        (config.local_dir) => {
-            console.log(`Downloading into {config.local_dir}`)
-            readline.close()
-        }
-    );
+    config.local_dir = readline.question('Please provide the name of the directory where to download the images: ');
+    console.log(`Downloading into ${config.local_dir}`)
+}
+if (!fs.existsSync(config.local_dir)) {
+    console.log(`Directory ${config.local_dir} doesnt exist. Creating`)
+    fs.mkdirSync(config.local_dir);
+} else {
+    console.log(`Directory ${config.local_dir} exists. Will overwrite any files in it`)
 }
 if (config.sleep_ms === "") {
     console.log('No sleep_ms defined. Please set the value in config.json');
@@ -98,16 +99,16 @@ for (var i = 1; i < config.pages + 1; i++) {
     //console.log("Getting: " + url);
     var options = {
         url: url,
+        pool: req_pool,
         headers: {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
             'User-Agent': config.ua,
             'Cookie': config.cookies
-        },
-        pool: req_pool
+        }
     };
     var filename = config.local_dir + '/'  + 'page_' + padding + ".jp2";
     download(options, filename, function() {
         console.log('Image downloaded');
     });
-    sleep.msleep(sleep_ms);
+    sleep.msleep(config.sleep_ms);
 }
