@@ -1,0 +1,19 @@
+{
+    "_url_stub" : "the actual url of the archive.org server, get it from the html source when reading the book",
+    "url_stub" : "",
+
+    "_cookies" : "copy your cookies when reading the book, use a plugin like HTTP Headers (or EditThisCookie) for Chrome",
+    "cookie" : "",
+
+    "_ua" : "copy your User-Agent here",
+    "ua" : "",
+
+    "_pages" : "how many pages to download",
+    "pages" : "",
+
+    "_sleep_ms" : "how long to wait between requests (in ms)",
+    "sleep_ms" : 100,
+
+    "_batch_size" : "how many concurrent connections do we allow",
+    "batch_size" : 20
+}

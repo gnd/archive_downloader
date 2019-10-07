@@ -2,3 +2,4 @@
 *.pdf
 books
 node_modules
+.config.json
