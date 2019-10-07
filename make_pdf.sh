@@ -62,7 +62,7 @@ else
     for img in `ls $BOOK|grep jp2`; do
         imgname=`echo $img|sed 's/\.jp2//g'`
         echo "Converting $img .."
-        convert $BOOK/$img $BOOK/$imgname.jpg
+        convert -density 70 -compress jpeg -quality 25 -resize 30% $BOOK/$img $BOOK/$imgname.jpg
     done
     echo "Coversion done."
 
