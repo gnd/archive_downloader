@@ -18,6 +18,8 @@ gnd, 2018-2019, initial impulse by db @ mnskp
 
 TODO: how did i start to code this in nodejs anyway ? async my ass..
 TODO: rewrite in python
+TODO: make sure filed download of images is noted and immediately retried
+TODO: add a switch to manually redownload a single page or a range
 */
 
 /* REQUIRES*/
