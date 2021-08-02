@@ -3,3 +3,5 @@
 ebooks
 node_modules
 config.json
+settings.cfg
+workdir

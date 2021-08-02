@@ -40,7 +40,7 @@ var download = function(options, filename, callback) {
         - url_stub is the partial url to the borrowed book, eg:
             https://ia902307.us.archive.org/BookReader/BookReaderImages.php?zip=/0/items/isbn_9780805067811/isbn_9780805067811_jp2.zip&file=isbn_9780805067811_jp2/isbn_9780805067811_",
         - cookies are cookies exported from the browser that borrowed the book
-        - ua is the User Agent string of the browser
+        - ua is the User Agent string of your browser
         - pages is the amount of pages to be downloaded
         - local_name is the location & name of the downloaded .jp2 files
         - sleep_ms is how long should archive_dl wait between creating new sockets

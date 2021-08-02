@@ -1,0 +1,32 @@
+# For all parameters please paste/write as they are, do not put into quotes. Make sure long parameters are on one line
+
+[browser_data]
+# Cookies
+# If you use EditThisCookie delete all comments (lines starting with //)
+
+# User Agent of the browser
+# You can find your user agent for example here: http://my-user-agent.com/
+user_agent = 
+
+[book_data]
+# Book url
+book_url = 
+
+# How many pages to download
+book_pages = 
+
+# Start from page
+start_from = 0
+
+[globals]
+# Where to download the files
+# If no download dir is provided, files will be downloaded in the active directory
+download_dir = 
+
+# How long to wait before requesting another page in ms.
+# Please note that too many requests in a short time can lead to a deauth from archive.org
+# You will need to refresh the page and borrow the book again
+sleep_interval = 100
+
+# Display debug messages.
+verbose = 0
