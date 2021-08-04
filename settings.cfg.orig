@@ -12,11 +12,11 @@ user_agent =
 # Book url
 book_url = 
 
-# How many pages to download
-book_pages = 
+# Start from page x
+start_page = 0
 
-# Start from page
-start_from = 0
+# Download till page x
+end_page = 
 
 [globals]
 # Where to download the files

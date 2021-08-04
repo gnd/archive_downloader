@@ -2,14 +2,20 @@ import os
 import re
 import sys
 import json
+import time
 import argparse
 import configparser
 import requests
 
-# setting default here, for other params use the config file
-START_FROM = 0
-DEFAULT_VERBOSE = 0
-DEFAULT_SLEEP_INTERVAL = 100
+# Some globals
+TIMEOUT = 30                    # timeout connection after 30 seconds
+MAX_ERRORS = 10                 # how many times can the download fail in order for the downloader to stop
+MIN_RESPONSE_SIZE = 5000        # if response size under 5000, we are not getting real data
+
+# Some default values
+START_PAGE = 0                  # default start page is 0
+DEFAULT_VERBOSE = 0             # by default verbose is off
+DEFAULT_SLEEP_INTERVAL = 100    # default sleep interval
 
 # 
 # This object will be used to store input params
@@ -18,18 +24,18 @@ class class_params:
     cookies = ""
     user_agent = ""
     book_url = ""
-    book_pages = ""
-    start_from = START_FROM
+    end_page = ""
+    start_page = START_PAGE
     download_dir = ""
     sleep_interval = DEFAULT_SLEEP_INTERVAL 
     verbose = DEFAULT_VERBOSE
     
-    def __init__(self, cookies, user_agent, book_url, book_pages, start_from, download_dir, sleep_interval, verbose): 
+    def __init__(self, cookies, user_agent, book_url, start_page, end_page, download_dir, sleep_interval, verbose): 
         self.cookies = cookies
         self.user_agent = user_agent
         self.book_url = book_url
-        self.book_pages = book_pages
-        self.start_from = start_from
+        self.start_page = start_page
+        self.end_page = end_page
         self.download_dir = download_dir
         self.sleep_interval = sleep_interval
         self.verbose = verbose
@@ -68,8 +74,8 @@ def process_input_params():
     parser.add_argument("-c", "--cookies", help="Browser cookies after borrowing the book")
     parser.add_argument("-u", "--user_agent", help="Browser User-Agent string")
     parser.add_argument("-b", "--book_url", help="The url where the book was borrowed")
-    parser.add_argument("-p", "--book_pages", help="How many pages to download", type=int)
-    parser.add_argument("-s", "--start_from", help="Start from page", type=int)
+    parser.add_argument("-s", "--start_page", help="Start from page", type=int)
+    parser.add_argument("-p", "--end_page", help="How many pages to download", type=int)
     parser.add_argument("-d", "--download_dir", help="Absolute path to the dir where the images will be downloaded")
     parser.add_argument("-i", "--sleep_interval", help="How long to sleep between requests", type=int, default=DEFAULT_SLEEP_INTERVAL)
     parser.add_argument("-v", "--verbose", help="Increase output verbosity", action="store_true", default=DEFAULT_VERBOSE)
@@ -85,8 +91,8 @@ def process_input_params():
         cookies = config.get('browser_data', 'cookies').strip(';')
         user_agent = config.get('browser_data', 'user_agent')
         book_url = config.get('book_data', 'book_url')
-        book_pages = int(config.get('book_data', 'book_pages'))
-        start_from = int(config.get('book_data', 'start_from'))
+        start_page = int(config.get('book_data', 'start_page'))
+        end_page = int(config.get('book_data', 'end_page'))
         download_dir = config.get('globals', 'download_dir').rstrip('/')
         sleep_interval = int(config.get('globals', 'sleep_interval'))
         verbose = int(config.get('globals', 'verbose'))
@@ -96,8 +102,8 @@ def process_input_params():
         cookies = args.cookies
         user_agent = args.user_agent
         book_url = args.book_url
-        book_pages = args.book_pages
-        start_from = args.start_from
+        start_page = args.start_page
+        end_page = args.end_page
         download_dir = args.download_dir
         sleep_interval = args.sleep_interval
     
@@ -114,8 +120,8 @@ def process_input_params():
     if book_url == None:
         print("Error: No book_url provided via the {}. Exiting.".format(mode))
         sys.exit()
-    if book_pages == None:
-        print("Error: No book_pages provided via the {}. Exiting.".format(mode))
+    if end_page == None:
+        print("Error: No end_page provided via the {}. Exiting.".format(mode))
         sys.exit()
     if download_dir:
         if (not os.path.exists(download_dir)):
@@ -137,14 +143,14 @@ def process_input_params():
     download_dir = download_dir.rstrip('/')
         
     # create and return params object
-    return class_params(cookies, user_agent, book_url, book_pages, start_from, download_dir, sleep_interval, verbose)
+    return class_params(cookies, user_agent, book_url, start_page, end_page, download_dir, sleep_interval, verbose)
 
 #
 # a simple helper function that uses Python's requests to get HTML data from a url
 #
 def simple_get_url(url):
-    r = requests.get(url)
-    return r.text
+    response = requests.get(url, timeout=TIMEOUT)
+    return response.text
 
 #    
 # This function accesses the book's page on archive.org
@@ -215,8 +221,7 @@ def create_image_url(book_info, verbose):
     
     return image_url
     
-def getCookies(cookie_jar, domain):
-    print(cookie_jar.get_dict(domain=domain))
+def extract_cookies(cookie_jar, domain):
     cookie_dict = cookie_jar.get_dict(domain=domain)
     found = ['%s=%s' % (name, value) for (name, value) in cookie_dict.items()]
     return ';'.join(found)
@@ -246,13 +251,16 @@ def get_book_page(image_url, params, page_index):
         print("Setting request headers: ")
         print(headers)
         
-    # get the data
-    response = requests.get(image_url, headers=headers)
-    print("OK")
-    
-    # return data to process)
-    new_cookies = getCookies(response.cookies, ".archive.org")
-    return (response.content, new_cookies)
+    # try and get the data
+    try:
+        # timeout is set to 30 seconds
+        response = requests.get(image_url, headers=headers, timeout=TIMEOUT)
+        error = None
+    except requests.exceptions.RequestException as e:
+        response = ''
+        error = e
+        
+    return (response, error)
     
 def save_page(download_dir, page_index, page):
     page_file = download_dir + "/" + "page_{:04}.jp2".format(page_index)
@@ -275,14 +283,68 @@ def main():
     image_url = create_image_url(book_info, params.verbose)
 
     # get individual pages of the book
-    for page_index in range(params.start_from, params.book_pages):
-        (page, new_cookies) = get_book_page(image_url, params, page_index)
-        if ((params.cookies != new_cookies) & (new_cookies != "")):
-            print("Cookies changed !\nold: {}\nnew: {}\n".format(params.cookies, new_cookies))
-        save_page(params.download_dir, page_index, page)
+    errors = 0
+    start_time = time.time()
+    bytes_downloaded = 0
     
-    # C'est fini
-    print("\nDone. Downloaded pages {}..{}".format(params.start_from, params.book_pages))
+    
+    #for page_index in range(params.start_page, params.end_page):
+    page_index = params.start_page
+    for (attempt in RANGE(MAX_TRIES)):
+        # if we reached MAX_TRIES, stop the download
+        if (attempt == MAX_TRIES-1):
+            sys.exit("Max tries reached. Exiting.")
+            
+        (response, error) = get_book_page(image_url, params, page_index)
+        
+        # if no error - process and save the data
+        if (error is None):
+            cookies = extract_cookies(response.cookies, ".archive.org")
+            length = len(response.content)
+            bytes_downloaded += length
+            duration = time.time() - start_time
+            if (page_index > 0):
+                time_per_page = duration / page_index
+            else: time_per_page = 0
+            pages_per_minute = page_index / (duration / 60)
+            bytes_per_minute = bytes_downloaded / (duration / 60)
+            
+            # TODO - remove after testing
+            print("* Total bytes: {}, Total duration: {:0.0f}s, Time per page: {:0.2f}s, Pages per minute: {:0.2f}, Bytes per minute: {:0.0f}".format(
+                bytes_downloaded, 
+                duration, 
+                time_per_page,
+                pages_per_minute,
+                bytes_per_minute))
+            if (cookies != ''):
+                print("Cookies returned: {}".format(cookies))
+                
+            # check if size big enough
+            if (length > MIN_RESPONSE_SIZE):
+                print("OK. {} bytes received".format(length))
+                if (page_index+1 <= params.end_page):
+                    page_index += 1
+                    break
+                else:
+                    # C'est fini
+                    print("\nDone. Downloaded pages {}..{}".format(params.start_page, params.end_page))
+            else:
+                print("NOT OK. Response size too small: {} bytes".format(length))
+                print("Will try again.")
+            
+            # save image file and advance to next page
+            save_page(params.download_dir, page_index, response.content)
+            
+        # otherwise - report error
+        else:
+            print("Error while downloading page {}:".format(page_index))
+            print(str(error))
+            
+        # show some debug info
+        if params.verbose:
+            print("* Cookies returned: {}".format(cookies))
+            print("* Response size: {}".format(length))    
+            print("* Total size: {}".format(bytes_downloaded))
 
 # Run archive_downloader
 if __name__ == "__main__":
