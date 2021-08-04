@@ -9,7 +9,7 @@ import requests
 
 # Some globals
 TIMEOUT = 30                    # timeout connection after 30 seconds
-MAX_ERRORS = 10                 # how many times can the download fail in order for the downloader to stop
+MAX_TRIES = 10                 # how many times can the download fail in order for the downloader to stop
 MIN_RESPONSE_SIZE = 5000        # if response size under 5000, we are not getting real data
 
 # Some default values
@@ -290,61 +290,68 @@ def main():
     
     #for page_index in range(params.start_page, params.end_page):
     page_index = params.start_page
-    for (attempt in RANGE(MAX_TRIES)):
-        # if we reached MAX_TRIES, stop the download
-        if (attempt == MAX_TRIES-1):
-            sys.exit("Max tries reached. Exiting.")
-            
-        (response, error) = get_book_page(image_url, params, page_index)
-        
-        # if no error - process and save the data
-        if (error is None):
-            cookies = extract_cookies(response.cookies, ".archive.org")
-            length = len(response.content)
-            bytes_downloaded += length
-            duration = time.time() - start_time
-            if (page_index > 0):
-                time_per_page = duration / page_index
-            else: time_per_page = 0
-            pages_per_minute = page_index / (duration / 60)
-            bytes_per_minute = bytes_downloaded / (duration / 60)
-            
-            # TODO - remove after testing
-            print("* Total bytes: {}, Total duration: {:0.0f}s, Time per page: {:0.2f}s, Pages per minute: {:0.2f}, Bytes per minute: {:0.0f}".format(
-                bytes_downloaded, 
-                duration, 
-                time_per_page,
-                pages_per_minute,
-                bytes_per_minute))
-            if (cookies != ''):
-                print("Cookies returned: {}".format(cookies))
+    while page_index <= params.end_page:
+        for attempt in range(MAX_TRIES):
+            # if we reached MAX_TRIES, stop the download
+            if (attempt == MAX_TRIES-1):
+                sys.exit("Max tries reached. Exiting.")
                 
-            # check if size big enough
-            if (length > MIN_RESPONSE_SIZE):
-                print("OK. {} bytes received".format(length))
-                if (page_index+1 <= params.end_page):
+            (response, error) = get_book_page(image_url, params, page_index)
+            
+            # if no error - process and save the data
+            if (error is None):
+                cookies = extract_cookies(response.cookies, ".archive.org")
+                length = len(response.content)
+                bytes_downloaded += length
+                duration = time.time() - start_time
+                if (page_index > 0):
+                    time_per_page = duration / page_index
+                else: time_per_page = 0
+                pages_per_minute = page_index / (duration / 60)
+                bytes_per_minute = bytes_downloaded / (duration / 60)
+                
+                if (cookies != ''):
+                    print("Cookies returned: {}".format(cookies))
+                        
+                # check if size big enough
+                if (length > MIN_RESPONSE_SIZE):
+                    print("OK. {} bytes received".format(length))
+                    # TODO - remove after testing
+                    print("* Total bytes: {}, Total duration: {:0.0f}s, Time per page: {:0.2f}s, Pages per minute: {:0.2f}, Bytes per minute: {:0.0f}".format(
+                        bytes_downloaded, 
+                        duration, 
+                        time_per_page,
+                        pages_per_minute,
+                        bytes_per_minute))
                     page_index += 1
                     break
                 else:
-                    # C'est fini
-                    print("\nDone. Downloaded pages {}..{}".format(params.start_page, params.end_page))
+                    print("NOT OK. Response size too small: {} bytes".format(length))
+                    # TODO - remove after testing
+                    print("* Total bytes: {}, Total duration: {:0.0f}s, Time per page: {:0.2f}s, Pages per minute: {:0.2f}, Bytes per minute: {:0.0f}".format(
+                        bytes_downloaded, 
+                        duration, 
+                        time_per_page,
+                        pages_per_minute,
+                        bytes_per_minute))
+                    print("* Will try again..\n")
+                
+                # save image file and advance to next page
+                save_page(params.download_dir, page_index, response.content)
+                
+            # otherwise - report error
             else:
-                print("NOT OK. Response size too small: {} bytes".format(length))
-                print("Will try again.")
-            
-            # save image file and advance to next page
-            save_page(params.download_dir, page_index, response.content)
-            
-        # otherwise - report error
-        else:
-            print("Error while downloading page {}:".format(page_index))
-            print(str(error))
-            
-        # show some debug info
-        if params.verbose:
-            print("* Cookies returned: {}".format(cookies))
-            print("* Response size: {}".format(length))    
-            print("* Total size: {}".format(bytes_downloaded))
+                print("Error while downloading page {}:".format(page_index))
+                print(str(error))
+                
+            # show some debug info
+            if params.verbose:
+                print("* Cookies returned: {}".format(cookies))
+                print("* Response size: {}".format(length))    
+                print("* Total size: {}".format(bytes_downloaded))
+                
+    # C'est fini
+    print("\nDone. Downloaded pages {}..{}".format(params.start_page, params.end_page))
 
 # Run archive_downloader
 if __name__ == "__main__":
